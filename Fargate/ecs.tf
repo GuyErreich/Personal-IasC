@@ -28,12 +28,12 @@ module "ecs" {
 
   services = {
     unreal_engine = {
-      cpu               = 1024
-      memory            = 4096
+      cpu               = 8 * 1024
+      memory            = 16 * 1096
       desired_count     = 0
 
       ephemeral_storage = {
-        size_in_gib = 40
+        size_in_gib = 70
       }
       
       enable_execute_command = true
@@ -57,18 +57,11 @@ module "ecs" {
         {
           name                    = "unreal-engine-ci-cd"
           image                   = "961341519925.dkr.ecr.eu-central-1.amazonaws.com/ci-cd/github-runner:latest"
-          cpu                     = 1024
-          memory                  = 4096
+          cpu                     = 4 * 1024
+          memory                  = 6 * 1024
           essential               = true
           user                    = "1000"
           readonly_root_filesystem  = false
-          # privileged = true
-
-          # linux_parameters = {
-          #   capabilities = {
-          #     add = ["ALL"]
-          #   }
-          # }
 
           # environment = [
           #   {
@@ -81,7 +74,6 @@ module "ecs" {
             "--repo", var.github_org,
             "--token", jsondecode(data.aws_secretsmanager_secret_version.github_runner_token.secret_string)["Token"],
             "--runner-name", "fargate_runner",
-            # "--aws-region", data.aws_region.current.name
           ]
 
           port_mappings = [
@@ -92,23 +84,9 @@ module "ecs" {
             }
           ]
 
-          # mount_points = [
-          #   {
-          #     "sourceVolume": "docker-socket",
-          #     "containerPath": "/var/run/docker.sock"
-          #   }
-          # ]
         }
       ]
 
-      # volume = [
-      #   {
-      #     "name": "docker-socket",
-      #     "host": {
-      #       "sourcePath": "/var/run/docker.sock"
-      #     }
-      #   }
-      # ]
 
       subnet_ids = module.vpc.private_subnets
 
