@@ -56,7 +56,7 @@ module "ecs" {
       container_definitions = [
         {
           name                    = "unreal-engine-ci-cd"
-          image                   = "961341519925.dkr.ecr.eu-central-1.amazonaws.com/ci-cd/github-runner:latest"
+          image                   = "961341519925.dkr.ecr.eu-central-1.amazonaws.com/ci_cd/unreal_engine:runner-5.4.4"
           cpu                     = 4 * 1024
           memory                  = 8 * 1024
           essential               = true

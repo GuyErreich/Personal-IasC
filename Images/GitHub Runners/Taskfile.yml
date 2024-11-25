@@ -1,0 +1,89 @@
+version: "3"
+
+tasks:
+  docker-build:
+    desc: Build the given docker file
+    run: when_changed
+    cmds:
+      - docker build -t {{.TAG}} -f {{.FILE}} {{.CONTEXT}}
+    vars:
+      TAG: "{{.TAG}}"
+      FILE: "{{.FILE}}"
+      CONTEXT: "{{.CONTEXT}}"
+
+  docker-push:
+    desc: Push a Docker image to the Amazon ECR
+    run: when_changed
+    cmds:
+      - docker push {{.TAG}}
+    vars:
+      TAG: "{{.TAG}}"
+
+  docker-ecr-login:
+    desc: Log in to the Amazon ECR
+    run: when_changed
+    cmds:
+      - echo "Logging in to Amazon ECR..."
+      - cmd: aws ecr get-login-password {{.PROFILE}} --region {{.REGION}} | docker login --username AWS --password-stdin 961341519925.dkr.ecr.{{.REGION}}.amazonaws.com
+        silent: true
+    vars:
+     PROFILE: '{{if .PROFILE}}--profile {{.PROFILE}}{{else}}{{end}}'
+     REGION: '{{.REGION | default "eu-central-1"}}'
+     ECR: '{{.ECR | default "961341519925.dkr.ecr.{{.REGION}}.amazonaws.com"}}'
+
+  basic-linux-x64:
+    desc: Build the basic-linux-x64 github runner
+    run: once
+    cmds:
+      - task: docker-build
+        vars:
+          TAG: '{{.TAG | default "961341519925.dkr.ecr.eu-central-1.amazonaws.com/ci-cd/github-runner:latest"}}'
+          FILE: '{{.FILE | default "basic_linux_x64.dockerfile"}}'
+          CONTEXT: '{{.CONTEXT | default "."}}'
+
+  push-basic-linux-x64:
+    desc: Push the basic-linux-x64 github runner
+    run: once
+    deps:
+      - docker-ecr-login
+    cmds:
+      - task: basic-linux-x64
+        vars:
+          TAG: '{{.TAG}}'
+          FILE: '{{.FILE}}'
+          CONTEXT: '{{.CONTEXT}}'
+      - task: docker-push
+        vars:
+          TAG: "{{.TAG}}"
+    vars:
+      TAG: '{{.TAG | default "961341519925.dkr.ecr.eu-central-1.amazonaws.com/ci-cd/github-runner:latest"}}'
+
+  unreal-engine-linux-x64:
+    desc: Build the unreal_engine_linux_x64 github runner
+    deps:
+      - push-basic-linux-x64
+    cmds:
+      - cp -r ../../Automation\ tools ./
+      - task: docker-build
+        vars:
+          TAG: '{{.TAG | default "961341519925.dkr.ecr.eu-central-1.amazonaws.com/ci_cd/unreal_engine:runner-5.4.4"}}'
+          FILE: '{{.FILE | default "unreal_engine_linux_x64.dockerfile"}}'
+          CONTEXT: '{{.CONTEXT | default "."}}'
+      - rm -rf ./Automation\ tools
+  
+  push-unreal-engine-linux-x64:
+    desc: Push the unreal-engine-linux-x64 github runner
+    run: once
+    deps:
+      - docker-ecr-login
+    cmds:
+      - task: unreal-engine-linux-x64
+        vars:
+          TAG: '{{.TAG}}'
+          FILE: '{{.FILE}}'
+          CONTEXT: '{{.CONTEXT}}'
+      - task: docker-push
+        vars:
+          TAG: "{{.TAG}}"
+    vars:
+      TAG: '{{.TAG | default "961341519925.dkr.ecr.eu-central-1.amazonaws.com/ci_cd/unreal_engine:runner-5.4.4"}}'
