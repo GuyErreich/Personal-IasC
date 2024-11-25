@@ -28,8 +28,8 @@ module "ecs" {
 
   services = {
     unreal_engine = {
-      cpu               = 8 * 1024
-      memory            = 16 * 1096
+      cpu               = 4 * 1024
+      memory            = 8 * 1024
       desired_count     = 0
 
       ephemeral_storage = {
@@ -58,7 +58,7 @@ module "ecs" {
           name                    = "unreal-engine-ci-cd"
           image                   = "961341519925.dkr.ecr.eu-central-1.amazonaws.com/ci-cd/github-runner:latest"
           cpu                     = 4 * 1024
-          memory                  = 6 * 1024
+          memory                  = 8 * 1024
           essential               = true
           user                    = "1000"
           readonly_root_filesystem  = false
