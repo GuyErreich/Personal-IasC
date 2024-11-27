@@ -12,64 +12,64 @@ module "vpc" {
   single_nat_gateway  = true
 }
 
-resource "aws_vpc_endpoint" "ssm" {
-  vpc_id              = module.vpc.vpc_id
-  service_name        = "com.amazonaws.${data.aws_region.current.name}.ssm"
-  vpc_endpoint_type   = "Interface"
-  subnet_ids          =  module.vpc.private_subnets
-  security_group_ids  = [module.vpc.default_security_group_id]
-}
+# resource "aws_vpc_endpoint" "ssm" {
+#   vpc_id              = module.vpc.vpc_id
+#   service_name        = "com.amazonaws.${data.aws_region.current.name}.ssm"
+#   vpc_endpoint_type   = "Interface"
+#   subnet_ids          =  module.vpc.private_subnets
+#   security_group_ids  = [module.vpc.default_security_group_id]
+# }
 
-resource "aws_vpc_endpoint" "ssm_messages" {
-  vpc_id              =  module.vpc.vpc_id
-  service_name        = "com.amazonaws.${data.aws_region.current.name}.ssmmessages"
-  vpc_endpoint_type   = "Interface"
-  subnet_ids          = module.vpc.private_subnets
-  security_group_ids  = [module.vpc.default_security_group_id]
-}
+# resource "aws_vpc_endpoint" "ssm_messages" {
+#   vpc_id              =  module.vpc.vpc_id
+#   service_name        = "com.amazonaws.${data.aws_region.current.name}.ssmmessages"
+#   vpc_endpoint_type   = "Interface"
+#   subnet_ids          = module.vpc.private_subnets
+#   security_group_ids  = [module.vpc.default_security_group_id]
+# }
 
-resource "aws_vpc_endpoint" "ecr" {
-  vpc_id              = module.vpc.vpc_id
-  service_name        = "com.amazonaws.${data.aws_region.current.name}.ecr.dkr"
-  vpc_endpoint_type   = "Interface"
-  subnet_ids          = module.vpc.private_subnets
-  security_group_ids  = [aws_security_group.ecr_endpoint_sg.id]
-}
+# resource "aws_vpc_endpoint" "ecr" {
+#   vpc_id              = module.vpc.vpc_id
+#   service_name        = "com.amazonaws.${data.aws_region.current.name}.ecr.dkr"
+#   vpc_endpoint_type   = "Interface"
+#   subnet_ids          = module.vpc.private_subnets
+#   security_group_ids  = [aws_security_group.ecr_endpoint_sg.id]
+# }
 
-resource "aws_vpc_endpoint" "ecr_api" {
-  vpc_id              = module.vpc.vpc_id
-  service_name        = "com.amazonaws.${data.aws_region.current.name}.ecr.api"
-  vpc_endpoint_type   = "Interface"
-  subnet_ids          = module.vpc.private_subnets
-  security_group_ids  = [aws_security_group.ecr_endpoint_sg.id]
-}
+# resource "aws_vpc_endpoint" "ecr_api" {
+#   vpc_id              = module.vpc.vpc_id
+#   service_name        = "com.amazonaws.${data.aws_region.current.name}.ecr.api"
+#   vpc_endpoint_type   = "Interface"
+#   subnet_ids          = module.vpc.private_subnets
+#   security_group_ids  = [aws_security_group.ecr_endpoint_sg.id]
+# }
 
 
 
-resource "aws_security_group" "ecr_endpoint_sg" {
-  name        = "ecr-endpoint-sg"
-  description = "Security group for ECR VPC endpoints"
-  vpc_id      = module.vpc.vpc_id
+# resource "aws_security_group" "ecr_endpoint_sg" {
+#   name        = "ecr-endpoint-sg"
+#   description = "Security group for ECR VPC endpoints"
+#   vpc_id      = module.vpc.vpc_id
 
-  # Allow inbound traffic from ECS task security group
-  ingress {
-    description      = "Allow ECS task access"
-    from_port        = 443
-    to_port          = 443
-    protocol         = "tcp"
-    security_groups  = [module.ecs.services["unreal_engine"].security_group_id] # Replace with your ECS SG
-  }
+#   # Allow inbound traffic from ECS task security group
+#   ingress {
+#     description      = "Allow ECS task access"
+#     from_port        = 443
+#     to_port          = 443
+#     protocol         = "tcp"
+#     security_groups  = [module.ecs.services["unreal_engine"].security_group_id] # Replace with your ECS SG
+#   }
 
-  # Allow all outbound traffic (required for interface endpoints)
-  egress {
-    description = "Allow all outbound traffic"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+#   # Allow all outbound traffic (required for interface endpoints)
+#   egress {
+#     description = "Allow all outbound traffic"
+#     from_port   = 0
+#     to_port     = 0
+#     protocol    = "-1"
+#     cidr_blocks = ["0.0.0.0/0"]
+#   }
 
-  tags = {
-    Name = "ecr-endpoint-sg"
-  }
-}
+#   tags = {
+#     Name = "ecr-endpoint-sg"
+#   }
+# }

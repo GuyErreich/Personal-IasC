@@ -6,12 +6,13 @@ usage() {
     echo "  --token                     The generated token for the runner"
     echo "  --runner-name               The name of the generated runner"
     echo "  --labels                    The labels of the generated runner"
+    echo "  --ecs-task                  Is this runner is an ecs task"
     echo "  -h, --help                  Display this help message"
     exit 1
 }
 
-declare -A ARGS=( ["repo"]="REPO" ["token"]="TOKEN" ["runner-name"]="RUNNER_NAME" ["labels"]="LABELS" )
-REPO="" TOKEN="" RUNNER_NAME="" LABELS=""
+declare -A ARGS=( ["repo"]="REPO" ["token"]="TOKEN" ["runner-name"]="RUNNER_NAME" ["labels"]="LABELS" ["ecs-task"]="ECS_TASK")
+REPO="" TOKEN="" RUNNER_NAME="" LABELS="" ECS_TASK=""
 
 while [[ "$#" -gt 0 ]]; do
     case $1 in
@@ -39,6 +40,13 @@ for arg in "REPO" "TOKEN" "RUNNER_NAME"; do
         usage
     fi
 done
+
+
+if [[ -n "${MY_ENV_VAR}" ]]; then
+    TASK_METADATA=$(curl $ECS_CONTAINER_METADATA_URI_V4/task)
+    TASK_ID=$(echo $TASK_METADATA | jq -r '.TaskARN' | awk -F'/' '{print $2}')
+    RUNNER_NAME+="-$TASK_ID"
+fi
 
 echo "Repo: $REPO"
 
