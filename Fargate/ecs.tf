@@ -101,7 +101,6 @@ module "ecs" {
 
           command = [
             "bash", "-c", <<EOT
-              
               ./entrypoint.sh \
               --repo ${var.github_org} \
               --token '${jsondecode(data.aws_secretsmanager_secret_version.github_runner_token.secret_string)["Token"]}' \

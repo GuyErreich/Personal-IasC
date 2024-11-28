@@ -1,52 +1,21 @@
-resource "aws_cloudwatch_log_metric_filter" "ecs_task_failure" {
-  log_group_name = "/ecs/${module.ecs.cloudwatch_log_group_name}"
-
-  name           = "ECS_Task_Failure"
-  pattern        = "{ $.reason = \"EssentialContainerExited\" }"
-
-  metric_transformation {
-    name      = "ECSFailedTasks"
-    namespace = "ECS"
-    value     = "1"
-  }
-}
-
 resource "aws_cloudwatch_metric_alarm" "ecs_task_failure_alarm" {
   alarm_name          = "ECS_Task_Failure_Alarm"
   comparison_operator = "GreaterThanOrEqualToThreshold"
   evaluation_periods  = 30
-  threshold           = 2  # Set based on acceptable retries
-  metric_name         = "ECSFailedTasks"
-  namespace           = "ECS"
+  metric_name         = "EssentialContainerExited"
+  namespace           = "ECS/TaskFailures"
   period              = 60
+  statistic           = "Sum"
+  threshold           = 2
 
-  alarm_actions       = [aws_sns_topic.task_failure_topic.arn]
-}
-
-resource "aws_cloudwatch_log_metric_filter" "ecs_running_task_count" {
-  log_group_name = "/ecs/${module.ecs.cloudwatch_log_group_name}"
-
-  name           = "ECS_Running_Task_Count"
-  pattern        = "{ $.desiredStatus = \"RUNNING\" }"
-
-  metric_transformation {
-    name      = "ECSRunningTaskCount"
-    namespace = "ECS"
-    value     = "1"
+  dimensions = {
+    ClusterName = module.ecs.cluster_name
+    ServiceName = module.ecs.services["unreal_engine"].name
   }
+
+  alarm_actions = [aws_sns_topic.task_failure_topic.arn]
 }
 
-resource "aws_cloudwatch_metric_alarm" "ecs_running_task_count_alarm" {
-  alarm_name          = "ECS_Running_Task_Count_Alarm"
-  comparison_operator = "NotEqualToThreshold"
-  evaluation_periods  = 1
-  threshold           = 1  # We expect only 1 running task
-  metric_name         = "ECSRunningTaskCount"
-  namespace           = "ECS"
-  period              = 60  # Check every minute
-
-  alarm_actions       = [aws_sns_topic.task_failure_topic.arn]
-}
 
 resource "aws_sns_topic" "task_failure_topic" {
   name = "ECS_Task_Failure_Topic"
@@ -56,5 +25,32 @@ resource "aws_sns_topic_subscription" "lambda_subscription" {
   topic_arn = aws_sns_topic.task_failure_topic.arn
   protocol  = "lambda"
   endpoint  = aws_lambda_function.task_failure_handler.arn
+}
+
+resource "aws_cloudwatch_event_rule" "ecs_task_stop" {
+  name        = "ecs_task_stop"
+  description = "Trigger when ECS tasks stop"
+  event_pattern = jsonencode({
+    "detail-type": ["ECS Task State Change"],
+    "source": ["aws.ecs"],
+    "detail": {
+      "lastStatus": ["STOPPED"],
+      "stopCode": ["EssentialContainerExited"]
+    }
+  })
+}
+
+resource "aws_cloudwatch_event_target" "ecs_failure_alarm_lambda" {
+  rule      = aws_cloudwatch_event_rule.ecs_task_stop.name
+  target_id = "task_failure_metric_generator"
+  arn       = aws_lambda_function.task_failure_metric_generator.arn
+}
+
+resource "aws_lambda_permission" "allow_cloudwatch_to_invoke_lambda" {
+  statement_id  = "AllowExecutionFromCloudWatch"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.task_failure_metric_generator.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.ecs_task_stop.arn
 }
 

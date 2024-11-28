@@ -2,7 +2,7 @@ import boto3
 
 ecs = boto3.client('ecs')
 
-def lambda_handler(event, context):
+def reset_desired_count_on_repeating_failure(event, context):
     # cluster_name = "your-cluster-name"
     # service_name = "your-service-name"
 
@@ -15,16 +15,21 @@ def lambda_handler(event, context):
         services=[service_name]
     )
     
-    desired_count = response['services'][0]['desiredCount']
-    
-    # If only 1 task is running, set desired count to 0
-    if desired_count == 1:
-        ecs.update_service(
-            cluster=cluster_name,
-            service=service_name,
-            desiredCount=0
-        )
-        print(f"Set desired count to 0 for service {service_name}")
+    if 'services' in response and response['services']:
+        desired_count = response['services'][0]['desiredCount']
+        
+        # If only 1 task is running, set desired count to 0
+        if desired_count == 1:
+            ecs.update_service(
+                cluster=cluster_name,
+                service=service_name,
+                desiredCount=0
+            )
+            print(f"Set desired count to 0 for service {service_name}")
+        else:
+            print(f"Desired count for service {service_name} is not 1, it is {desired_count}")
+    else:
+        print(f"Failed to describe service {service_name} in cluster {cluster_name}")
     # optional later if ever needed currently will not give me the results i want
     # else:
     #     # Find failing task and stop it
