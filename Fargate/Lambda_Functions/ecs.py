@@ -1,13 +1,32 @@
 import boto3
+import json
+import logging
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 ecs = boto3.client('ecs')
 
 def reset_desired_count_on_repeating_failure(event, context):
-    # cluster_name = "your-cluster-name"
-    # service_name = "your-service-name"
-
-    cluster_name = event.get('clusterName')  # Adjust based on the actual event structure
-    service_name = event.get('serviceName')  # Adjust based on the actual event structure
+   # Log the received event
+    logger.info(f"Received event: {json.dumps(event, indent=2)}")
+    
+    # Extract the message from the SNS event
+    sns_message = event['Records'][0]['Sns']['Message']
+    parsed_message = json.loads(sns_message)  # Parse the JSON string into a Python dictionary
+    
+    # Extract ClusterName and ServiceName from the message
+    dimensions = parsed_message['Trigger']['Dimensions']
+    cluster_name = next((dim['value'] for dim in dimensions if dim['name'] == 'ClusterName'), None)
+    service_name = next((dim['value'] for dim in dimensions if dim['name'] == 'ServiceName'), None)
+    
+    # Log extracted values
+    logger.info(f"Extracted ClusterName: {cluster_name}")
+    logger.info(f"Extracted ServiceName: {service_name}")
+    
+    if not cluster_name or not service_name:
+        logger.error("ClusterName or ServiceName not found in the event.")
+        return
     
     # Describe Service
     response = ecs.describe_services(
