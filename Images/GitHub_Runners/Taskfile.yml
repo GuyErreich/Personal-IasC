@@ -1,4 +1,13 @@
-version: "3"
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+version: '3'
+
+# output:
+#   group:
+#     begin: '::group::{{.TASK}}'
+#     end: '::endgroup::'
+
+env:
+  TAG: "{{.TAG}}"
 
 tasks:
   docker-build:
@@ -18,6 +27,15 @@ tasks:
       - docker push {{.TAG}}
     vars:
       TAG: "{{.TAG}}"
+
+  docker-run:
+    desc: Run a container with the named docker image
+    run: when_changed
+    cmds:
+      - docker run {{.FLAGS}} {{.TAG}} {{.CLI_ARGS}}
+    vars:
+      TAG: '{{.TAG}}'
+      FLAGS: '{{.FLAGS}}'
 
   docker-ecr-login:
     desc: Log in to the Amazon ECR
@@ -54,6 +72,19 @@ tasks:
           CONTEXT: '{{.CONTEXT}}'
       - task: docker-push
         vars:
+          TAG: "{{.TAG}}"
+    vars:
+      TAG: '{{.TAG | default "961341519925.dkr.ecr.eu-central-1.amazonaws.com/ci-cd/github-runner:latest"}}'
+
+  run-basic-linux-x64:
+    desc: dadasd
+    run: when_changed
+    deps:
+      - basic-linux-x64
+    cmds:
+      - task: docker-run
+        vars:
+          FLAGS: '{{.FLAGS | default "--rm -it"}}'
           TAG: "{{.TAG}}"
     vars:
       TAG: '{{.TAG | default "961341519925.dkr.ecr.eu-central-1.amazonaws.com/ci-cd/github-runner:latest"}}'
