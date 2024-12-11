@@ -61,6 +61,7 @@ if [[ "${FLAGS[ecs-task]}" == "true" ]]; then
 
     if [[ -n "$TASK_ID" ]]; then
         RUNNER_NAME+="-$TASK_ID"
+        LABELS+=",$TASK_ID"
     else
         echo "Error: Unable to fetch ECS task ID."
         exit 1
@@ -94,5 +95,5 @@ sudo sh -c "echo 'RUNNER_MANAGER_DIR=${RUNNER_MANAGER_DIR}' >> /etc/environment"
 source $RUNNER_MANAGER_DIR/start_supervisor.sh
 
 cd actions-runner || { echo "Error: Directory 'actions-runner' not found."; exit 1; }
-./config.sh --unattended --replace --url "https://github.com/$REPO" --token "$RUNNER_TOKEN" --name "$RUNNER_NAME" ${LABELS:+--labels "$LABELS"}
-./run.sh
+github-runner-config --unattended --replace --url "https://github.com/$REPO" --token "$RUNNER_TOKEN" --name "$RUNNER_NAME" ${LABELS:+--labels "$LABELS"}
+github-runner-run

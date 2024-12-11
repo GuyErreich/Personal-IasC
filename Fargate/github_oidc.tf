@@ -19,8 +19,7 @@ module "iam_github_oidc_ecs_role" {
   ]
 
   policies = {
-    ECSServicePolicy = aws_iam_policy.ecs_update_service_policy.arn,
-    # FullAccess = "arn:aws:iam::aws:policy/AmazonECS_FullAccess"
+    ECSServicePolicy = aws_iam_policy.ecs_update_service_policy.arn
   }
 }
 
@@ -38,7 +37,6 @@ module "iam_github_oidc_ecr_role" {
   ]
 
   policies = {
-    ECSServicePolicy = aws_iam_policy.ecr_pull_accesses.arn,
-    # FullAccess = "arn:aws:iam::aws:policy/AmazonECS_FullAccess"
+    ECSServicePolicy = aws_iam_policy.ecr_pull_accesses.arn
   }
 }

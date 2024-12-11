@@ -12,6 +12,13 @@ module "vpc" {
   single_nat_gateway  = true
 }
 
+# NOTE: if you don't care about the costs you can use the ecs on private subnet in your vpc.
+#       if so you will need these end point for debugging and enabling communication between
+#       the ECS and the ECR. 
+
+#       might also be smart to add an AWS PrivateLink to increase ECR pull speed for such big images
+#       like an UnrealEngine automation image.
+
 # resource "aws_vpc_endpoint" "ssm" {
 #   vpc_id              = module.vpc.vpc_id
 #   service_name        = "com.amazonaws.${data.aws_region.current.name}.ssm"

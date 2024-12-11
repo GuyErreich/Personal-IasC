@@ -1,7 +1,7 @@
 resource "aws_cloudwatch_metric_alarm" "ecs_task_failure_alarm" {
   alarm_name          = "ECS_Task_Failure_Alarm"
   comparison_operator = "GreaterThanOrEqualToThreshold"
-  evaluation_periods  = 2
+  evaluation_periods  = 1
   metric_name         = "EssentialContainerExited"
   namespace           = "ECS/TaskFailures"
   period              = 30 * 60
@@ -15,7 +15,6 @@ resource "aws_cloudwatch_metric_alarm" "ecs_task_failure_alarm" {
 
   alarm_actions = [aws_sns_topic.task_failure_topic.arn]
 }
-
 
 resource "aws_sns_topic" "task_failure_topic" {
   name = "ECS_Task_Failure_Topic"
@@ -44,31 +43,5 @@ resource "aws_cloudwatch_event_target" "ecs_failure_alarm_lambda" {
   rule      = aws_cloudwatch_event_rule.ecs_task_stop.name
   target_id = "task_failure_metric_generator"
   arn       = aws_lambda_function.task_failure_metric_generator.arn
-}
-
-resource "aws_lambda_permission" "allow_cloudwatch_to_invoke_lambda" {
-  depends_on = [ 
-    aws_lambda_function.task_failure_metric_generator,
-    aws_cloudwatch_event_rule.ecs_task_stop
-  ]
-
-  statement_id  = "AllowExecutionFromCloudWatch"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.task_failure_metric_generator.function_name
-  principal     = "events.amazonaws.com"
-  source_arn    = aws_cloudwatch_event_rule.ecs_task_stop.arn
-}
-
-resource "aws_lambda_permission" "allow_sns_to_invoke_lambda" {
-  depends_on = [ 
-    aws_lambda_function.task_failure_handler,
-    aws_sns_topic.task_failure_topic
-  ]
-
-  statement_id  = "AllowExecutionFromSNS"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.task_failure_handler.function_name
-  principal     = "sns.amazonaws.com"
-  source_arn    = aws_sns_topic.task_failure_topic.arn
 }
 

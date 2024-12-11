@@ -97,7 +97,7 @@ tasks:
       - cp -r ../../Automation\ tools ./
       - task: docker-build
         vars:
-          TAG: '{{.TAG | default "961341519925.dkr.ecr.eu-central-1.amazonaws.com/ci_cd/unreal_engine:runner-5.4.4"}}'
+          TAG: '{{.TAG | default "961341519925.dkr.ecr.eu-central-1.amazonaws.com/ci-cd/unreal-engine:runner-5.4.4"}}'
           FILE: '{{.FILE | default "unreal_engine_linux_x64.dockerfile"}}'
           CONTEXT: '{{.CONTEXT | default "."}}'
       - rm -rf ./Automation\ tools
@@ -117,4 +117,17 @@ tasks:
         vars:
           TAG: "{{.TAG}}"
     vars:
-      TAG: '{{.TAG | default "961341519925.dkr.ecr.eu-central-1.amazonaws.com/ci_cd/unreal_engine:runner-5.4.4"}}'
+      TAG: '{{.TAG | default "961341519925.dkr.ecr.eu-central-1.amazonaws.com/ci-cd/unreal-engine:runner-5.4.4"}}'
+
+  run-unreal-engine-linux-x64:
+    desc: dadasd
+    run: when_changed
+    deps:
+      - unreal-engine-linux-x64
+    cmds:
+      - task: docker-run
+        vars:
+          FLAGS: '{{.FLAGS | default "--rm -it"}}'
+          TAG: "{{.TAG}}"
+    vars:
+      TAG: '{{.TAG | default "961341519925.dkr.ecr.eu-central-1.amazonaws.com/ci-cd/unreal-engine:runner-5.4.4"}}'
