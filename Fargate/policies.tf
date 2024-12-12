@@ -20,6 +20,8 @@ resource "aws_iam_policy" "ecr_pull_accesses" {
 }
 
 resource "aws_iam_policy" "ecs_update_service_policy" {
+  depends_on = [ module.ecs ]
+
   name        = "ECSUpdateServicePolicy"
   description = "Policy to allow updating desired count of ECS service"
 
@@ -28,17 +30,24 @@ resource "aws_iam_policy" "ecs_update_service_policy" {
     Statement = [
       {
         Effect   = "Allow"
-        Action   = "ecs:UpdateService"
+        Action   = [
+          "ecs:UpdateService",
+          "ecs:DescribeServices",
+        ]
         Resource = flatten([
-          # Generate service ARNs for each service in the cluster
-          for service in module.ecs.services : "arn:aws:ecs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:service/${module.ecs.cluster_name}/${service.name}"
+          for service in module.ecs.services : service.id
         ])
       },
       {
         Effect   = "Allow"
-        Action   = "ecs:UpdateService"
-        Resource = "arn:aws:ecs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:cluster/${module.ecs.cluster_name}"
-      }
+        Action   = [
+          "ecs:DescribeTasks",
+          "ecs:StopTask"
+        ]
+        Resource = flatten([
+          for service in module.ecs.services : "arn:aws:ecs:${local.current_region}:${local.current_account}:task/${module.ecs.cluster_name}/*"
+        ])
+      },
     ]
   })
 }
