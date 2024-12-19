@@ -44,11 +44,11 @@ def reset_desired_count_on_repeating_failure(event, context):
                 service=service_name,
                 desiredCount=0
             )
-            print(f"Set desired count to 0 for service {service_name}")
+            logger.info(f"Set desired count to 0 for service {service_name}")
         else:
-            print(f"Desired count for service {service_name} is not 1, it is {desired_count}")
+            logger.info(f"Desired count for service {service_name} is not 1, it is {desired_count}")
     else:
-        print(f"Failed to describe service {service_name} in cluster {cluster_name}")
+        logger.info(f"Failed to describe service {service_name} in cluster {cluster_name}")
     # optional later if ever needed currently will not give me the results i want
     # else:
     #     # Find failing task and stop it

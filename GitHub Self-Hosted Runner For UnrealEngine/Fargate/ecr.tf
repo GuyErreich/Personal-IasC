@@ -26,3 +26,16 @@ module "ecr_repos" {
     ]
   })
 }
+
+resource "null_resource" "build_and_push_images" {
+  for_each = var.ecr_images
+
+  depends_on = [module.ecr_repos]
+
+  provisioner "local-exec" {
+    command = <<EOT
+      # Run the Go task to build and push the Docker image to ECR
+      task -d ../Images push IMAGE_NAME=${each.value.name} TAG=${each.value.tag} CONTEXT=${each.value.context} FILE=${each.value.file} REGION=${data.aws_region.current.name} ACCOUNT_ID=${data.aws_caller_identity.current.account_id}
+    EOT
+  }
+}

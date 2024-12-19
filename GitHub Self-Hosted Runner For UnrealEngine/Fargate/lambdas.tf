@@ -2,9 +2,9 @@ resource "aws_lambda_function" "task_failure_handler" {
   depends_on = [aws_iam_role.lambda_exec]
 
   # Force update when the zip_files resource changes
-  source_code_hash = filebase64sha256("Lambda_Functions/archive.zip")
+  source_code_hash = filebase64sha256("${var.lambda_zip}")
 
-  filename         = "Lambda_Functions/archive.zip"
+  filename         = "${var.lambda_zip}"
   function_name    = "task_failure_handler"
   role             = aws_iam_role.lambda_exec.arn
   handler          = "ecs.reset_desired_count_on_repeating_failure"
@@ -22,9 +22,9 @@ resource "aws_lambda_function" "task_failure_metric_generator" {
   depends_on = [aws_iam_role.lambda_exec]
   
   # Force update when the zip_files resource changes
-  source_code_hash = filebase64sha256("Lambda_Functions/archive.zip")
+  source_code_hash = filebase64sha256("${var.lambda_zip}")
 
-  filename         = "Lambda_Functions/archive.zip"
+  filename         = "${var.lambda_zip}"
   function_name    = "task_failure_metric_generator"
   role             = aws_iam_role.lambda_exec.arn
   handler          = "cloudwatch.generate_metrics_for_failure_alarm"

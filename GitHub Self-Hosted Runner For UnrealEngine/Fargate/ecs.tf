@@ -64,7 +64,7 @@ module "ecs" {
       container_definitions = [
         {
           name                     = "unreal-engine-ci-cd"
-          image                    = data.aws_ecr_image.unreal_engine.image_uri //INFO: for testing only
+          image                    = data.aws_ecr_image.images["unreal_engine"].image_uri
           cpu                      = 4 * 1024
           memory                   = 16 * 1024
           essential                = true

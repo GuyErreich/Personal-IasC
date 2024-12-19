@@ -17,8 +17,8 @@ output "ecs_cluster_id" {
   value = module.ecs.cluster_id
 }
 
-output "github_token" {
-  value = local.github_token
+output "github_runner_token" {
+  value = local.github_runner_token
   sensitive = true
 }
 
