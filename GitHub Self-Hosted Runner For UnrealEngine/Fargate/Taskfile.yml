@@ -1,0 +1,66 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+version: '3'
+
+output: prefixed
+
+vars:
+  REGION:   '{{ default "eu-central-1" .REGION }}'
+  ACCOUNT_ID: 
+    sh: aws sts get-caller-identity --query Account --output text
+  REPO:     '{{.ACCOUNT_ID}}dkr.ecr.{{.REGION}}.amazonaws.com'
+  PLAN_FILE: 'aws_fargate.tfplan'
+  LAMBDA_FOLDER: './Lambda_Functions'
+  LAMBDA_FILE_NAME: 'lambda.zip'
+  LAMBDA_LAYER_FOLDER: './Lambda_Functions/layer'
+  LAMBDA_LAYER_FILE_NAME: 'layer.zip'
+
+tasks:
+  init:
+    desc: Initialize Terraform
+    run: once
+    cmd: terraform init {{.CLI_ARGS}}
+
+  validate:
+    desc: Initialize Terraform
+    run: once
+    cmd: terraform validate
+
+  plan:
+    desc: Initialize Terraform
+    run: when_changed
+    deps:
+      - zip_lambda_function
+      - zip_lambda_layer
+    cmd: >
+      terraform plan
+      -out={{.PLAN_FILE}}
+      -var "lambda_zip={{.LAMBDA_FOLDER}}/{{.LAMBDA_FILE_NAME}}"
+      -var "lambda_layer_zip={{.LAMBDA_LAYER_FOLDER}}/{{.LAMBDA_LAYER_FILE_NAME}}"
+      {{.CLI_ARGS}}
+
+  apply:
+    desc: Initialize Terraform
+    run: when_changed
+    deps:
+      - plan
+    prompt: Please make sure you went over the plan logs before continue, apply at your own risk!
+    cmd: terraform apply "{{.PLAN_FILE}}"
+
+  zip_lambda_function:
+    desc: Pack all the lambda files
+    run: once
+    internal: true
+    cmd: >
+      cd {{.LAMBDA_FOLDER}} &&
+      rm -rf {{.LAMBDA_FILE_NAME}} &&
+      zip -r {{.LAMBDA_FILE_NAME}} . -i ./*.py
+
+  zip_lambda_layer:
+    desc: Pack all the lambda files
+    run: once
+    internal: true
+    cmd: >
+      cd {{.LAMBDA_LAYER_FOLDER}} &&
+      rm -rf {{.LAMBDA_LAYER_FILE_NAME}} &&
+      pip install -r ../requirements.txt -t . &&   
+      zip -r {{.LAMBDA_LAYER_FILE_NAME}} .

@@ -1,0 +1,14 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+version: '3'
+
+tasks:
+  deploy:
+    desc: Initialize Terraform
+    run: when_changed
+    dir: Fargate
+    cmds: 
+      - task init -- -upgrade
+      - task validate
+      - task apply -- -target=module.ecr_repos
+      - task apply -- -target=null_resource.build_and_push_images
+      - task apply
